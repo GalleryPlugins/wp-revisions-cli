@@ -27,30 +27,43 @@ class Revisions_CLI extends WP_CLI_Command { // phpcs:ignore WordPressVIPMinimum
 	 *
 	 *     wp revisions dump
 	 */
-	public function dump( $args = array(), $assoc_args = array() ) {
+    public function dump( $args = array(), $assoc_args = array() ) {
+        if ( is_multisite() ) {
+            // If in a multisite environment, iterate over all sites
+            $sites = get_sites(); // Get a list of all the sites in the network
 
-		global $wpdb;
-		$revs = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = 'revision'" );
+            foreach ( $sites as $site ) {
+                switch_to_blog( $site->blog_id ); // Switch to the context of this site
+                $this->remove_revisions( $assoc_args ); // Call a function to remove revisions
+                restore_current_blog(); // Switch back to the original site context
+            }
+        } else {
+            // If in a single-site environment, just call the function to remove revisions directly
+            $this->remove_revisions( $assoc_args );
+        }
+    }
 
-		if ( $revs < 1 ) {
-			WP_CLI::success( 'No revisions.' );
-			return;
-		}
+    private function remove_revisions( $assoc_args ) {
+        global $wpdb;
+        $revs = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = 'revision'" );
 
-		WP_CLI::confirm( sprintf( 'Remove all %d revisions?', $revs ), $assoc_args );
+        if ( $revs < 1 ) {
+            WP_CLI::success( 'No revisions.' );
+            return;
+        }
 
-		if ( isset( $assoc_args['hard'] ) ) {
-			WP_CLI::run_command( array( 'revisions', 'clean', -1 ), array( 'hard' => '' ) );
-			return;
-		}
+        WP_CLI::confirm( sprintf( 'Remove all %d revisions?', $revs ), $assoc_args );
 
-		$wpdb->query( "DELETE FROM $wpdb->posts WHERE post_type = 'revision'" );
+        if ( isset( $assoc_args['hard'] ) ) {
+            // If 'hard' option is set, use a hypothetical command to clean revisions
+            WP_CLI::run_command( array( 'revisions', 'clean', -1 ), array( 'hard' => '' ) );
+            return;
+        }
 
-		// @todo: Are there caches to clear?
-
-		WP_CLI::success( 'Finished removing all revisions.' );
-
-	}
+        $wpdb->query( "DELETE FROM $wpdb->posts WHERE post_type = 'revision'" );
+        // Consider if there are any caches that need to be cleared here
+        WP_CLI::success( 'Finished removing all revisions.' );
+    }
 
 	/**
 	 * List all revisions
