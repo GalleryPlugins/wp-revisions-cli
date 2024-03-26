@@ -1,8 +1,8 @@
 {
-	"name": "trepmal/wp-revisions-cli",
+	"name": "GalleryPlugins/wp-revisions-cli",
 	"description": "Manage revisions",
 	"type": "wp-cli-package",
-	"homepage": "https://github.com/trepmal/wp-revisions-cli",
+	"homepage": "https://github.com/GalleryPlugins/wp-revisions-cli",
 	"license": "MIT",
 	"require": {
 		"ext-json": "*",
@@ -10,7 +10,7 @@
 	},
 	"config": {
 		"platform": {
-			"php": "5.4"
+			"php": ">=5.4"
 		},
 		"process-timeout": 7200,
 		"sort-packages": true
